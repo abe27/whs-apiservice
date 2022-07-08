@@ -38,7 +38,6 @@ func Logon(c *gin.Context) {
 	r.Message = models.Welcome
 	r.Data = nil
 	c.JSON(http.StatusOK, r)
-	return
 }
 
 func RefreshToken(c *gin.Context) {
@@ -47,7 +46,6 @@ func RefreshToken(c *gin.Context) {
 	r.Message = models.UserRefreshToken
 	r.Data = nil
 	c.JSON(http.StatusOK, r)
-	return
 }
 
 func Logout(c *gin.Context) {
@@ -56,7 +54,6 @@ func Logout(c *gin.Context) {
 	r.Message = models.UserLeave
 	r.Data = nil
 	c.JSON(http.StatusOK, r)
-	return
 }
 
 func Profile(c *gin.Context) {
@@ -65,5 +62,4 @@ func Profile(c *gin.Context) {
 	r.Message = models.UserProfileReady
 	r.Data = nil
 	c.JSON(http.StatusOK, r)
-	return
 }
