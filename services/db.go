@@ -1,4 +1,4 @@
-package databases
+package services
 
 import (
 	"os"
@@ -12,7 +12,7 @@ import (
 
 var DB *gorm.DB
 
-func ConnectDatabase() {
+func ConnDB() {
 	dsn := os.Getenv("DSN_STRING") + "?charset=utf8mb4&parseTime=True&loc=Local"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		SkipDefaultTransaction: true,
@@ -30,5 +30,6 @@ func ConnectDatabase() {
 
 	// Migrate database schema
 	db.AutoMigrate(&models.User{})
+	db.AutoMigrate(&models.JwtToken{})
 	DB = db
 }
