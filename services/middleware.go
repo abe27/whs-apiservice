@@ -12,12 +12,55 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func ValidateToken(token string) error {
-	if token != "ACCESS_TOKEN" {
-		return fmt.Errorf("token provided was invalid")
+// func ValidateToken(token string) error {
+// 	db := DB
+// 	var jwtToken models.JwtToken
+// 	err := db.Where(&token, jwtToken.ID).First(&jwtToken).Error
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	fmt.Println(jwtToken.JwtToken)
+
+// 	if token != "ACCESS_TOKEN" {
+// 		return fmt.Errorf("token provided was invalid")
+// 	}
+
+// 	return nil
+// }
+
+func ValidateToken(token string) (interface{}, error) {
+	db := DB
+	var jwtToken models.JwtToken
+	err := db.Where("id=?", token).First(&jwtToken).Error
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	// fmt.Println(token)
+	// fmt.Println(jwtToken.JwtToken)
+	parsedToken, err := jwt.Parse(jwtToken.JwtToken, func(t *jwt.Token) (interface{}, error) {
+		fmt.Println(t)
+		_, ok := t.Method.(*jwt.SigningMethodHMAC)
+		if !ok {
+			return nil, fmt.Errorf("unexpected method: %s", t.Header["alg"])
+		}
+		return []byte(models.SecretKey), nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("validate: %w", err)
+	}
+
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok || !parsedToken.Valid {
+		return nil, fmt.Errorf("validate: invalid token")
+	}
+
+	fmt.Println(claims["name"])
+	fmt.Println("--------------------------------------")
+
+	return claims["name"], nil
 }
 
 func CreateToken(name string) (string, error) {
@@ -38,15 +81,14 @@ func AuthorizationMiddleware(c *gin.Context) {
 	s := c.Request.Header.Get("Authorization")
 	var r models.Response
 	token := strings.TrimPrefix(s, "Bearer ")
-
-	if err := ValidateToken(token); err != nil {
+	_, err := ValidateToken(token)
+	if err != nil {
 		r.Status = false
-		r.Message = models.UserNotAuthenticated
+		r.Message = err.Error()
 		r.Data = err
 		c.JSON(http.StatusUnauthorized, r)
 		c.Abort()
 		return
 	}
-
 	c.Next()
 }

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -183,10 +182,22 @@ func RefreshToken(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
+	db := databases.DB
+	var jwtToken models.JwtToken
 	var r models.Response
 	s := c.Request.Header.Get("Authorization")
-	token := strings.TrimPrefix(s, "Bearer ")
-	fmt.Println(token)
+	jwtToken.ID = strings.TrimPrefix(s, "Bearer ")
+	err := db.Find(&jwtToken).Error
+	if err != nil {
+		r.Status = false
+		r.Message = models.SystemError
+		r.Data = err
+		c.JSON(http.StatusInternalServerError, r)
+		c.Abort()
+		return
+	}
+
+	db.Delete(&jwtToken)
 	r.Status = true
 	r.Message = models.UserLeave
 	r.Data = nil
